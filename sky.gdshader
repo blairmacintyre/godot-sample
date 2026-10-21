@@ -74,11 +74,12 @@ void sky() {
 	vec3 col;
 	if (h >= 0.0) {
 		float t = pow(h, 0.55);
-		col = mix(horizon_color, mid_color, smoothstep(0.0, 0.35, t));
+		col = mix(horizon_color, mid_color, smoothstep(0.0, 0.22, t));
 		col = mix(col, zenith_color, smoothstep(0.3, 1.0, t));
 	} else {
 		// Starts at exactly horizon_color so it meets the sky above without a step.
-		col = mix(horizon_color, ground_color, smoothstep(0.0, 0.25, -h));
+		// Keep the 0.06 in sync with grid_floor.gdshader.
+		col = mix(horizon_color, ground_color, smoothstep(0.0, 0.06, -h));
 	}
 
 	if (h > 0.0) {
