@@ -58,16 +58,27 @@ func _build_rig() -> void:
 		print("OpenXR initialized, starting VR")
 		var viewport := get_viewport()
 		viewport.use_xr = true
-		viewport.vrs_mode = Viewport.VRS_XR
+		# Foveated rendering (variable rate shading from the OpenXR runtime) stays on
+		# for the Steam Frame, which has eye tracking. It is skipped on Android (Meta
+		# Quest): setting vrs_mode = VRS_XR in the frame VR starts left a
+		# cut-and-shifted band at the left and right edges there.
+		if not OS.has_feature("android"):
+			viewport.vrs_mode = Viewport.VRS_XR
 	else:
 		print("OpenXR not available, using flat preview camera")
 		_camera.position.y = EYE_HEIGHT
 
 
-## Shows the runtime's own model for this hand's controller (the real Steam Frame
-## controller, via XR_EXT_render_model). The placeholder wand is hidden once a
-## model appears and comes back if the runtime provides none.
+## Shows the real controller model for this hand. The placeholder wand is hidden
+## once a model appears and comes back if the runtime provides none.
+##  - Meta Quest: Meta's own controller meshes through XR_FB_render_model, using the
+##    OpenXR Vendors plugin's OpenXRFbRenderModel node.
+##  - Everything else (Steam Frame): the runtime's XR_EXT_render_model meshes.
 func _add_render_model(hand: String, controller: HandController) -> void:
+	if _meta_render_models_available():
+		_add_meta_render_model(hand, controller)
+		return
+
 	var manager := OpenXRRenderModelManager.new()
 	manager.name = hand.capitalize().replace(" ", "") + "Model"
 	manager.tracker = (
@@ -78,6 +89,36 @@ func _add_render_model(hand: String, controller: HandController) -> void:
 	manager.render_model_added.connect(func(_model): controller.set_wand_visible(false))
 	manager.render_model_removed.connect(func(_model): controller.set_wand_visible(true))
 	_origin.add_child(manager)
+
+
+## True when the OpenXR Vendors plugin is loaded and the runtime supports and
+## enabled XR_FB_render_model (Meta Quest). Looked up by name so the project still
+## parses and runs without the plugin.
+func _meta_render_models_available() -> bool:
+	if not ClassDB.class_exists("OpenXRFbRenderModel"):
+		return false
+	if not Engine.has_singleton("OpenXRFbRenderModelExtension"):
+		return false
+	var extension: Object = Engine.get_singleton("OpenXRFbRenderModelExtension")
+	return extension.call("is_enabled")
+
+
+func _add_meta_render_model(hand: String, controller: HandController) -> void:
+	# Meta's meshes are authored for the grip pose, so they get their own controller
+	# node on the grip pose rather than riding on the aim-pose HandController.
+	var grip := XRController3D.new()
+	grip.name = hand.capitalize().replace(" ", "") + "Grip"
+	grip.tracker = hand
+	grip.pose = "grip"
+
+	var model: Node3D = ClassDB.instantiate("OpenXRFbRenderModel")
+	model.name = "ControllerModel"
+	model.set("render_model_type", 0 if hand == "left_hand" else 1)
+	model.connect("openxr_fb_render_model_loaded", func():
+		print("%s: Meta controller model loaded" % hand)
+		controller.set_wand_visible(false))
+	grip.add_child(model)
+	_origin.add_child(grip)
 
 
 ## Rotates the play space about the user's head so they turn in place.

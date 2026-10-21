@@ -2,9 +2,11 @@ class_name HandController
 extends XRController3D
 ## A tracked hand controller with teleport, grab-and-throw and snap turn.
 ##
-## Teleport: hold the bumper (shoulder button) to aim. A ballistic arc comes out
+## Teleport: push the thumbstick forward to aim and release it to go. Controllers
+## that report no profile (the flat preview) fall back to holding the bumper
+## (shoulder button). A ballistic arc comes out
 ## of the controller until it reaches the ground plane (y = 0), with a circle
-## marking the landing spot. Releasing the bumper emits `teleport_requested`. The
+## marking the landing spot. Releasing the stick (or bumper) emits `teleport_requested`. The
 ## arc turns red, shows no circle and does nothing on release when the controller
 ## points up more than `max_aim_pitch` degrees above the horizon (or when the arc
 ## never lands).
@@ -33,6 +35,10 @@ signal snap_turn_requested(angle_degrees: float)
 @export var valid_color := Color(0.2, 0.95, 1.0)
 @export var invalid_color := Color(1.0, 0.25, 0.25)
 
+## Thumbstick-forward teleport. Auto enables it once the controller reports an
+## interaction profile (Meta Quest and Steam Frame); the bumper is then ignored.
+@export_enum("Auto", "Always", "Never") var stick_teleport := 0
+
 @export_group("Grab")
 @export var grab_radius := 0.12
 @export var throw_boost := 1.0
@@ -44,6 +50,8 @@ const TELEPORT_BUTTON := "bumper_click"
 const GRAB_BUTTONS := ["trigger_click", "grip_click"]
 const SNAP_TRIGGER := 0.7
 const SNAP_RESET := 0.3
+const STICK_AIM_PRESS := 0.7
+const STICK_AIM_RELEASE := 0.3
 const VELOCITY_SAMPLES := 8
 const GRABBABLE_GROUP := &"grabbable"
 
@@ -52,6 +60,7 @@ var _has_target := false
 var _target := Vector3.ZERO
 
 var _snap_ready := true
+var _stick_aiming := false
 
 var _held: RigidBody3D
 var _held_offset := Transform3D.IDENTITY
@@ -151,12 +160,13 @@ func _on_tracking_changed(tracking: bool) -> void:
 		if hand_tracker:
 			print("%s tracking, interaction profile: %s" % [tracker, hand_tracker.profile])
 	if not tracking:
+		_stick_aiming = false
 		_end_aiming(false)
 		_release_held()
 
 
 func _on_button_pressed(action_name: String) -> void:
-	if action_name == TELEPORT_BUTTON:
+	if action_name == TELEPORT_BUTTON and not _uses_stick_teleport():
 		_begin_aiming()
 	elif action_name in GRAB_BUTTONS:
 		_grab_buttons_down[action_name] = true
@@ -164,7 +174,7 @@ func _on_button_pressed(action_name: String) -> void:
 
 
 func _on_button_released(action_name: String) -> void:
-	if action_name == TELEPORT_BUTTON:
+	if action_name == TELEPORT_BUTTON and not _uses_stick_teleport():
 		_end_aiming(true)
 	elif action_name in GRAB_BUTTONS:
 		_grab_buttons_down.erase(action_name)
@@ -173,9 +183,30 @@ func _on_button_released(action_name: String) -> void:
 			_release_held()
 
 
+## True when this controller teleports with the thumbstick instead of a bumper.
+## Auto is false only until a profile is known (e.g. the flat desktop preview).
+func _uses_stick_teleport() -> bool:
+	if stick_teleport != 0:
+		return stick_teleport == 1
+	var hand_tracker := XRServer.get_tracker(tracker)
+	if hand_tracker == null or hand_tracker.profile.is_empty():
+		return false
+	return true
+
+
 func _on_vector2_changed(action_name: String, value: Vector2) -> void:
 	if action_name != "primary":
 		return
+	if _uses_stick_teleport():
+		if value.y >= STICK_AIM_PRESS and absf(value.y) > absf(value.x) and not _stick_aiming:
+			_stick_aiming = true
+			_begin_aiming()
+		elif _stick_aiming and value.y <= STICK_AIM_RELEASE:
+			_stick_aiming = false
+			_end_aiming(true)
+		# Don't snap turn while aiming with the same stick.
+		if _stick_aiming:
+			return
 	if absf(value.x) <= SNAP_RESET:
 		_snap_ready = true
 	elif _snap_ready and absf(value.x) >= SNAP_TRIGGER and absf(value.x) > absf(value.y):

@@ -16,6 +16,7 @@ compatibility/default_parent_skeleton_in_mesh_instance_3d=true
 
 config/name="Frame Cube"
 run/main_scene="res://main.tscn"
+config/icon="res://icon.svg"
 config/features=PackedStringArray("4.7", "Mobile")
 
 [display]
@@ -32,4 +33,5 @@ textures/vram_compression/import_etc2_astc=true
 openxr/enabled=true
 openxr/reference_space=2
 openxr/extensions/render_model=true
+openxr/extensions/meta/render_model=true
 shaders/enabled=true
