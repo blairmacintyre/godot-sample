@@ -36,7 +36,8 @@ signal snap_turn_requested(angle_degrees: float)
 @export var invalid_color := Color(1.0, 0.25, 0.25)
 
 ## Thumbstick-forward teleport. Auto enables it once the controller reports an
-## interaction profile (Meta Quest and Steam Frame); the bumper is then ignored.
+## interaction profile (Meta Quest and Steam Frame) and always in a web browser,
+## where WebXR reports no profile; the bumper is then ignored.
 @export_enum("Auto", "Always", "Never") var stick_teleport := 0
 
 @export_group("Grab")
@@ -48,6 +49,8 @@ signal snap_turn_requested(angle_degrees: float)
 
 const TELEPORT_BUTTON := "bumper_click"
 const GRAB_BUTTONS := ["trigger_click", "grip_click"]
+## The thumbstick is "primary" in the OpenXR action map and "thumbstick" in WebXR.
+const STICK_INPUTS := ["primary", "thumbstick"]
 const SNAP_TRIGGER := 0.7
 const SNAP_RESET := 0.3
 const STICK_AIM_PRESS := 0.7
@@ -188,6 +191,8 @@ func _on_button_released(action_name: String) -> void:
 func _uses_stick_teleport() -> bool:
 	if stick_teleport != 0:
 		return stick_teleport == 1
+	if OS.has_feature("web"):
+		return true
 	var hand_tracker := XRServer.get_tracker(tracker)
 	if hand_tracker == null or hand_tracker.profile.is_empty():
 		return false
@@ -195,7 +200,7 @@ func _uses_stick_teleport() -> bool:
 
 
 func _on_vector2_changed(action_name: String, value: Vector2) -> void:
-	if action_name != "primary":
+	if action_name not in STICK_INPUTS:
 		return
 	if _uses_stick_teleport():
 		if value.y >= STICK_AIM_PRESS and absf(value.y) > absf(value.x) and not _stick_aiming:

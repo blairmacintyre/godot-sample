@@ -1,8 +1,12 @@
 extends Node3D
 ## Builds the whole scene in code: a physics cube you can pick up and throw, on a
 ## grid floor under a fantasy sky. Runs in VR via OpenXR when a headset runtime
-## is present, otherwise falls back to a normal window so you can preview it on
-## a desktop.
+## is present. In a web browser it shows an "Enter VR" button that starts a WebXR
+## session. Otherwise it falls back to a normal window so you can preview it on a
+## desktop.
+##
+## The web build has no OpenXR module, so OpenXR-only classes are only ever named
+## as strings here; naming them directly would stop the script loading there.
 
 const CUBE_SIZE := 0.5
 const CUBE_POSITION := Vector3(0.0, CUBE_SIZE * 0.5, -1.5)
@@ -13,6 +17,8 @@ const CUBE_MAX_DISTANCE := 80.0
 var _cube: RigidBody3D
 var _origin: XROrigin3D
 var _camera: XRCamera3D
+var _webxr: XRInterface
+var _webxr_button: Button
 
 
 func _ready() -> void:
@@ -53,6 +59,8 @@ func _build_rig() -> void:
 		# Render models need a running OpenXR session; the flat preview has none.
 		if xr_active:
 			_add_render_model(hand, controller)
+		elif OS.has_feature("web"):
+			_add_webxr_model(hand, controller)
 
 	if xr_active:
 		print("OpenXR initialized, starting VR")
@@ -67,6 +75,57 @@ func _build_rig() -> void:
 	else:
 		print("OpenXR not available, using flat preview camera")
 		_camera.position.y = EYE_HEIGHT
+		if OS.has_feature("web"):
+			_set_up_webxr()
+
+
+## Browsers only start an immersive session from a user gesture, so WebXR waits
+## for the "Enter VR" button. It appears once the browser says VR is supported.
+func _set_up_webxr() -> void:
+	_webxr = XRServer.find_interface("WebXR")
+	if _webxr == null:
+		return
+
+	var layer := CanvasLayer.new()
+	layer.name = "WebXRUI"
+	add_child(layer)
+	_webxr_button = Button.new()
+	_webxr_button.text = "Enter VR"
+	_webxr_button.add_theme_font_size_override("font_size", 32)
+	_webxr_button.set_anchors_and_offsets_preset(Control.PRESET_CENTER)
+	_webxr_button.grow_horizontal = Control.GROW_DIRECTION_BOTH
+	_webxr_button.grow_vertical = Control.GROW_DIRECTION_BOTH
+	_webxr_button.visible = false
+	_webxr_button.pressed.connect(_enter_webxr)
+	layer.add_child(_webxr_button)
+
+	_webxr.session_supported.connect(func(mode: String, supported: bool):
+		print("WebXR %s supported: %s" % [mode, supported])
+		_webxr_button.visible = supported)
+	_webxr.session_started.connect(func():
+		print("WebXR session started, reference space: ", _webxr.reference_space_type)
+		_webxr_button.visible = false
+		_camera.position = Vector3.ZERO
+		get_viewport().use_xr = true)
+	_webxr.session_ended.connect(func():
+		get_viewport().use_xr = false
+		_camera.transform = Transform3D(Basis.IDENTITY, Vector3(0.0, EYE_HEIGHT, 0.0))
+		_webxr_button.visible = true)
+	_webxr.session_failed.connect(func(message: String):
+		push_warning("WebXR session failed: " + message)
+		_webxr_button.visible = true)
+	_webxr.is_session_supported("immersive-vr")
+
+
+func _enter_webxr() -> void:
+	_webxr_button.visible = false
+	_webxr.session_mode = "immersive-vr"
+	# Floor-level tracking puts the floor at y = 0, like OpenXR's stage space.
+	_webxr.requested_reference_space_types = "local-floor, local"
+	_webxr.optional_features = "local-floor"
+	if not _webxr.initialize():
+		push_warning("WebXR failed to initialize")
+		_webxr_button.visible = true
 
 
 ## Shows the real controller model for this hand. The placeholder wand is hidden
@@ -79,16 +138,25 @@ func _add_render_model(hand: String, controller: HandController) -> void:
 		_add_meta_render_model(hand, controller)
 		return
 
-	var manager := OpenXRRenderModelManager.new()
+	var manager: Node3D = ClassDB.instantiate("OpenXRRenderModelManager")
 	manager.name = hand.capitalize().replace(" ", "") + "Model"
-	manager.tracker = (
-		OpenXRRenderModelManager.RENDER_MODEL_TRACKER_LEFT_HAND
-		if hand == "left_hand"
-		else OpenXRRenderModelManager.RENDER_MODEL_TRACKER_RIGHT_HAND
-	)
-	manager.render_model_added.connect(func(_model): controller.set_wand_visible(false))
-	manager.render_model_removed.connect(func(_model): controller.set_wand_visible(true))
+	manager.set("tracker", ClassDB.class_get_integer_constant(
+		"OpenXRRenderModelManager",
+		"RENDER_MODEL_TRACKER_LEFT_HAND" if hand == "left_hand" else "RENDER_MODEL_TRACKER_RIGHT_HAND"))
+	manager.connect("render_model_added", func(_model): controller.set_wand_visible(false))
+	manager.connect("render_model_removed", func(_model): controller.set_wand_visible(true))
 	_origin.add_child(manager)
+
+
+## In a WebXR session: the browser's controller model for this hand, on the grip
+## pose the models are made for.
+func _add_webxr_model(hand: String, controller: HandController) -> void:
+	var model := WebXRControllerModel.new()
+	model.name = hand.capitalize().replace(" ", "") + "Model"
+	model.tracker = hand
+	model.pose = "grip"
+	model.model_loaded.connect(func(): controller.set_wand_visible(false))
+	_origin.add_child(model)
 
 
 ## True when the OpenXR Vendors plugin is loaded and the runtime supports and
