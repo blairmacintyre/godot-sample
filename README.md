@@ -1,4 +1,11 @@
-When I got a Steam Frame, I decided to try vibe-coding a VR app to see what it's like working with Claude and Godot. A silly little sample with a ground plane and fancy animated skybox where you can teleport around and pick up and throw a big pink cube.  
+When I got a Steam Frame, I decided to try vibe-coding a VR app to see what it's like working with Claude and Godot. A small office (from `office_vr/`) standing on a grid floor under a fancy animated skybox. Teleport around, push the furniture where you like, swing the door open and flip the light switch.
+
+- **Grab** (trigger or grip) while touching something:
+  - **Furniture** (desk, desk chair, treadmill, guest chairs, bookcase, table, filing cabinet, waste bin) slides along the floor with your hand; twist your wrist to turn it. It stops at walls and shoves other furniture aside.
+  - **The door** swings on its hinge as you move your hand.
+  - **The light switch** by the door turns both ceiling lights on and off.
+- **Teleport**: push the thumbstick forward to aim and release to go. The arc only lands on open floor.
+- **Snap turn**: flick the thumbstick left or right.  
 
 Works on Steam Frame and Quest3, includes proper controller models.
 

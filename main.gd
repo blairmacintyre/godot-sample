@@ -1,20 +1,15 @@
 extends Node3D
-## Builds the whole scene in code: a physics cube you can pick up and throw, on a
-## grid floor under a fantasy sky. Runs in VR via OpenXR when a headset runtime
-## is present. In a web browser it shows an "Enter VR" button that starts a WebXR
-## session. Otherwise it falls back to a normal window so you can preview it on a
-## desktop.
+## Builds the whole scene in code: an office with furniture you can push around,
+## a door that swings and lights you can switch, standing on a grid floor under a
+## fantasy sky. Runs in VR via OpenXR when a headset runtime is present. In a web
+## browser it shows an "Enter VR" button that starts a WebXR session. Otherwise it
+## falls back to a normal window so you can preview it on a desktop.
 ##
 ## The web build has no OpenXR module, so OpenXR-only classes are only ever named
 ## as strings here; naming them directly would stop the script loading there.
 
-const CUBE_SIZE := 0.5
-const CUBE_POSITION := Vector3(0.0, CUBE_SIZE * 0.5, -1.5)
 const EYE_HEIGHT := 1.6
-## A thrown cube that ends up farther away than this is put back.
-const CUBE_MAX_DISTANCE := 80.0
 
-var _cube: RigidBody3D
 var _origin: XROrigin3D
 var _camera: XRCamera3D
 var _webxr: XRInterface
@@ -24,19 +19,15 @@ var _webxr_button: Button
 func _ready() -> void:
 	_build_environment()
 	_build_floor()
-	_build_cube()
+	_build_office()
 	_build_light()
 	_build_rig()
-
-
-func _process(_delta: float) -> void:
-	if _cube.global_position.length() > CUBE_MAX_DISTANCE:
-		_reset_cube()
 
 
 func _build_rig() -> void:
 	_origin = XROrigin3D.new()
 	_origin.name = "XROrigin3D"
+	_origin.position = Office.SPAWN
 	add_child(_origin)
 
 	_camera = XRCamera3D.new()
@@ -46,8 +37,9 @@ func _build_rig() -> void:
 	var xr_interface := XRServer.find_interface("OpenXR")
 	var xr_active := xr_interface != null and xr_interface.is_initialized()
 
-	# Either hand can teleport (hold the bumper to aim, release to go), grab and
-	# throw the cube (trigger or grip), and snap turn (thumbstick).
+	# Either hand can teleport (hold the bumper to aim, release to go), grab
+	# furniture, the door or the light switch (trigger or grip), and snap turn
+	# (thumbstick).
 	for hand in ["left_hand", "right_hand"]:
 		var controller := HandController.new()
 		controller.name = hand.capitalize().replace(" ", "")
@@ -218,7 +210,8 @@ func _build_environment() -> void:
 	env.background_mode = Environment.BG_SKY
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	env.ambient_light_energy = 0.8
+	# Kept low so the office is dim with its lights off.
+	env.ambient_light_energy = 0.35
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 
 	var world_env := WorldEnvironment.new()
@@ -244,52 +237,17 @@ func _build_floor() -> void:
 	var floor_mesh := MeshInstance3D.new()
 	floor_mesh.name = "Floor"
 	floor_mesh.mesh = plane
+	# Just below the office carpet so the two never z-fight.
+	floor_mesh.position.y = -0.01
 	floor_mesh.material_override = material
 	floor_mesh.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	add_child(floor_mesh)
 
 
-func _build_cube() -> void:
-	var box := BoxMesh.new()
-	box.size = Vector3.ONE * CUBE_SIZE
-
-	var material := StandardMaterial3D.new()
-	material.albedo_color = Color(0.95, 0.45, 0.85)
-	material.metallic = 0.3
-	material.roughness = 0.35
-	material.emission_enabled = true
-	material.emission = Color(0.6, 0.15, 0.5)
-	material.emission_energy_multiplier = 0.4
-
-	var mesh_instance := MeshInstance3D.new()
-	mesh_instance.mesh = box
-	mesh_instance.material_override = material
-
-	var shape := CollisionShape3D.new()
-	var box_shape := BoxShape3D.new()
-	box_shape.size = box.size
-	shape.shape = box_shape
-
-	var physics_material := PhysicsMaterial.new()
-	physics_material.bounce = 0.35
-	physics_material.friction = 0.8
-
-	_cube = RigidBody3D.new()
-	_cube.name = "Cube"
-	_cube.mass = 1.0
-	_cube.physics_material_override = physics_material
-	_cube.continuous_cd = true
-	_cube.add_to_group(HandController.GRABBABLE_GROUP)
-	_cube.add_child(mesh_instance)
-	_cube.add_child(shape)
-	_cube.position = CUBE_POSITION
-	add_child(_cube)
-
-
-func _reset_cube() -> void:
-	_cube.linear_velocity = Vector3.ZERO
-	_cube.angular_velocity = Vector3.ZERO
-	_cube.global_transform = Transform3D(Basis.IDENTITY, CUBE_POSITION)
+func _build_office() -> void:
+	var office := Office.new()
+	office.name = "Office"
+	add_child(office)
 
 
 func _build_light() -> void:
@@ -298,4 +256,7 @@ func _build_light() -> void:
 	light.light_color = Color(1.0, 0.85, 0.7)
 	light.light_energy = 1.2
 	light.rotation_degrees = Vector3(-35.0, 40.0, 0.0)
+	# The sun casts no shadows, so keep it off the office or it would light the
+	# room straight through the walls and ceiling.
+	light.light_cull_mask &= ~(1 << (Office.RENDER_LAYER - 1))
 	add_child(light)

@@ -5,14 +5,17 @@ extends XRController3D
 ## Teleport: push the thumbstick forward to aim and release it to go. Controllers
 ## that report no profile (the flat preview) fall back to holding the bumper
 ## (shoulder button). A ballistic arc comes out
-## of the controller until it reaches the ground plane (y = 0), with a circle
-## marking the landing spot. Releasing the stick (or bumper) emits `teleport_requested`. The
-## arc turns red, shows no circle and does nothing on release when the controller
-## points up more than `max_aim_pitch` degrees above the horizon (or when the arc
-## never lands).
+## of the controller until it hits something or reaches the ground plane (y = 0),
+## with a circle marking the landing spot. Releasing the stick (or bumper) emits
+## `teleport_requested`. The arc turns red, shows no circle and does nothing on
+## release when the controller points up more than `max_aim_pitch` degrees above
+## the horizon, or when the arc never lands on open floor (it hits a wall, the
+## ceiling or furniture).
 ##
 ## Grab: squeeze the trigger or grip while touching a body in the "grabbable"
-## group to hold it. Releasing throws it with the controller's velocity.
+## group to hold it. A body with `grab_begin(hand)` and `grab_end(hand)` methods
+## handles being held itself (furniture, doors, switches). Any other RigidBody3D
+## follows the hand and is thrown with the controller's velocity on release.
 ##
 ## Snap turn: flick the thumbstick left or right to rotate by `snap_angle`.
 ##
@@ -57,6 +60,10 @@ const STICK_AIM_PRESS := 0.7
 const STICK_AIM_RELEASE := 0.3
 const VELOCITY_SAMPLES := 8
 const GRABBABLE_GROUP := &"grabbable"
+## Landing surfaces must face up at least this much (cosine of the slope) and be
+## no higher than FLOOR_HEIGHT.
+const FLOOR_NORMAL_Y := 0.9
+const FLOOR_HEIGHT := 0.05
 
 var _aiming := false
 var _has_target := false
@@ -65,7 +72,7 @@ var _target := Vector3.ZERO
 var _snap_ready := true
 var _stick_aiming := false
 
-var _held: RigidBody3D
+var _held: CollisionObject3D
 var _held_offset := Transform3D.IDENTITY
 var _grab_buttons_down := {}
 ## Recent controller poses in the parent's (play space) frame: [time, position, rotation].
@@ -91,7 +98,7 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if _aiming:
 		_update_arc()
-	if _held:
+	if _held and not _handles_own_grab(_held):
 		_record_sample()
 		_held.global_transform = global_transform * _held_offset
 
@@ -99,6 +106,11 @@ func _process(delta: float) -> void:
 ## The placeholder wand is only for runtimes that provide no controller model.
 func set_wand_visible(wand_visible: bool) -> void:
 	_wand.visible = wand_visible
+
+
+## True when `body` manages being held itself rather than following the hand.
+static func _handles_own_grab(body: Object) -> bool:
+	return body.has_method("grab_begin")
 
 
 ## True while this hand is holding a body.
@@ -253,14 +265,15 @@ func _is_pointing_too_high() -> bool:
 	return rad_to_deg(asin(clampf(forward.y, -1.0, 1.0))) > max_aim_pitch
 
 
-## Simulates a projectile from the controller and returns its path. The last
-## point is on the ground when the path reaches it. `_has_target` is only set
-## when it lands and the controller is not pointing too high.
+## Simulates a projectile from the controller and returns its path, ending where
+## it first hits something or reaches the ground. `_has_target` is only set when
+## it lands on floor and the controller is not pointing too high.
 func _simulate_arc() -> PackedVector3Array:
 	var points := PackedVector3Array()
 	var position_now := global_position
 	var velocity := -global_basis.z * launch_speed
 	var too_high := _is_pointing_too_high()
+	var space := get_world_3d().direct_space_state
 	_has_target = false
 	points.append(position_now)
 
@@ -268,6 +281,14 @@ func _simulate_arc() -> PackedVector3Array:
 	while t < max_time:
 		var next_position := position_now + velocity * step_time
 		velocity.y -= gravity * step_time
+		var hit := space.intersect_ray(PhysicsRayQueryParameters3D.create(position_now, next_position))
+		if not hit.is_empty():
+			var point: Vector3 = hit.position
+			points.append(point)
+			if not too_high and hit.normal.y >= FLOOR_NORMAL_Y and point.y <= FLOOR_HEIGHT:
+				_target = Vector3(point.x, 0.0, point.z)
+				_has_target = true
+			return points
 		if next_position.y <= 0.0 and position_now.y > 0.0:
 			var fraction := position_now.y / (position_now.y - next_position.y)
 			var landing := position_now.lerp(next_position, fraction)
@@ -316,18 +337,20 @@ func _update_arc() -> void:
 # --- Grab and throw ------------------------------------------------------
 
 ## Finds a grabbable body touching a small sphere at the controller.
-func _find_grabbable() -> RigidBody3D:
+func _find_grabbable() -> CollisionObject3D:
 	var sphere := SphereShape3D.new()
 	sphere.radius = grab_radius
 	var query := PhysicsShapeQueryParameters3D.new()
 	query.shape = sphere
 	query.transform = Transform3D(Basis.IDENTITY, global_position)
 	var hits := get_world_3d().direct_space_state.intersect_shape(query, 8)
-	var best: RigidBody3D = null
+	var best: CollisionObject3D = null
 	var best_distance := INF
 	for hit in hits:
-		var body := hit.collider as RigidBody3D
+		var body := hit.collider as CollisionObject3D
 		if body == null or not body.is_in_group(GRABBABLE_GROUP):
+			continue
+		if not (body is RigidBody3D or _handles_own_grab(body)):
 			continue
 		var distance := body.global_position.distance_to(global_position)
 		if distance < best_distance:
@@ -350,22 +373,30 @@ func _try_grab() -> void:
 			other._release_held(false)
 
 	_held = body
-	_held_offset = global_transform.affine_inverse() * body.global_transform
 	body.set_meta("held_by", self)
-	body.freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
-	body.freeze = true
-	_samples.clear()
-	_record_sample()
+	if _handles_own_grab(body):
+		body.grab_begin(self)
+	else:
+		var rigid := body as RigidBody3D
+		_held_offset = global_transform.affine_inverse() * rigid.global_transform
+		rigid.freeze_mode = RigidBody3D.FREEZE_MODE_KINEMATIC
+		rigid.freeze = true
+		_samples.clear()
+		_record_sample()
 	_pulse(0.4, 0.05)
 
 
 func _release_held(throw := true) -> void:
 	if _held == null:
 		return
-	var body := _held
+	var held := _held
 	_held = null
-	if body.has_meta("held_by") and body.get_meta("held_by") == self:
-		body.remove_meta("held_by")
+	if held.has_meta("held_by") and held.get_meta("held_by") == self:
+		held.remove_meta("held_by")
+	if _handles_own_grab(held):
+		held.grab_end(self)
+		return
+	var body := held as RigidBody3D
 	body.freeze = false
 	if throw:
 		var motion := _estimate_motion()

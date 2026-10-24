@@ -35,3 +35,7 @@ openxr/reference_space=2
 openxr/extensions/render_model=true
 openxr/extensions/meta/render_model=true
 shaders/enabled=true
+
+[physics]
+
+common/physics_ticks_per_second=90

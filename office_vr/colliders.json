@@ -1,0 +1,754 @@
+{
+  "units": "metres",
+  "coordinate_system": "right-handed, Y up, +Z entry",
+  "colliders": [
+    {
+      "name": "Floor",
+      "parent": "Floor",
+      "type": "box",
+      "center": [
+        0,
+        -0.055,
+        0
+      ],
+      "size": [
+        3.7846,
+        0.11,
+        3.6576
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0,
+        0,
+        0
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "AccentWall",
+      "parent": "Wall_Accent",
+      "type": "box",
+      "center": [
+        -1.9573,
+        1.3716,
+        0
+      ],
+      "size": [
+        0.13,
+        2.7432,
+        3.6576
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0,
+        0,
+        0
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "RightWall",
+      "parent": "Wall_Right",
+      "type": "box",
+      "center": [
+        1.9573,
+        1.3716,
+        0
+      ],
+      "size": [
+        0.13,
+        2.7432,
+        3.6576
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0,
+        0,
+        0
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "RearWall",
+      "parent": "Wall_Rear",
+      "type": "box",
+      "center": [
+        0,
+        1.3716,
+        -1.8938
+      ],
+      "size": [
+        3.7846,
+        2.7432,
+        0.13
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0,
+        0,
+        0
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "RearWallJog",
+      "parent": "Wall_Rear",
+      "type": "box",
+      "center": [
+        0.94,
+        1.3716,
+        -1.7238
+      ],
+      "size": [
+        1.9043,
+        2.7432,
+        0.21
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0,
+        0,
+        0
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "EntryPier",
+      "parent": "Wall_Entry",
+      "type": "box",
+      "center": [
+        -0.88615,
+        1.3716,
+        1.8938
+      ],
+      "size": [
+        2.0123,
+        2.7432,
+        0.13
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0,
+        0,
+        0
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "EntryPier",
+      "parent": "Wall_Entry",
+      "type": "box",
+      "center": [
+        1.77615,
+        1.3716,
+        1.8938
+      ],
+      "size": [
+        0.23230000000000017,
+        2.7432,
+        0.13
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0,
+        0,
+        0
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "EntryHeader",
+      "parent": "Wall_Entry",
+      "type": "box",
+      "center": [
+        0.8899999999999999,
+        2.4516,
+        1.8938
+      ],
+      "size": [
+        1.54,
+        0.5831999999999997,
+        0.13
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0,
+        0,
+        0
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "Sidelight",
+      "parent": "Wall_Entry",
+      "type": "box",
+      "center": [
+        0.375,
+        1.09,
+        1.8437999999999999
+      ],
+      "size": [
+        0.44,
+        2.1,
+        0.05
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0,
+        0,
+        0
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "Door",
+      "parent": "Door_Hinge",
+      "type": "box",
+      "center": [
+        -0.471,
+        1.058,
+        0
+      ],
+      "size": [
+        0.934,
+        2.106,
+        0.043
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        1.598,
+        0,
+        1.8288
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "Ceiling",
+      "parent": "Ceiling_Grid",
+      "type": "box",
+      "center": [
+        0,
+        2.7882,
+        0
+      ],
+      "size": [
+        3.7846,
+        0.09,
+        3.6576
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0,
+        0,
+        0
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "DeskLeg",
+      "parent": "Standing_Desk",
+      "type": "box",
+      "center": [
+        -0.84,
+        0.38,
+        0
+      ],
+      "size": [
+        0.09,
+        0.74,
+        0.11
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        -0.94,
+        0,
+        -0.3
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "DeskLeg",
+      "parent": "Standing_Desk",
+      "type": "box",
+      "center": [
+        0.84,
+        0.38,
+        0
+      ],
+      "size": [
+        0.09,
+        0.74,
+        0.11
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        -0.94,
+        0,
+        -0.3
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "DeskTop",
+      "parent": "Standing_Desk",
+      "type": "box",
+      "center": [
+        0,
+        0.764,
+        0
+      ],
+      "size": [
+        1.82,
+        0.04,
+        0.762
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        -0.94,
+        0,
+        -0.3
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "Treadmill",
+      "parent": "Walking_Treadmill",
+      "type": "box",
+      "center": [
+        0,
+        0.07,
+        0
+      ],
+      "size": [
+        0.555,
+        0.14,
+        1.3
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        -1.25,
+        0,
+        -0.569
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "OfficeChairBase",
+      "parent": "Office_Chair",
+      "type": "box",
+      "center": [
+        0,
+        0.25,
+        0
+      ],
+      "size": [
+        0.62,
+        0.5,
+        0.62
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        -0.52,
+        0,
+        -0.76
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "OfficeChairBack",
+      "parent": "Office_Chair",
+      "type": "box",
+      "center": [
+        0,
+        0.87,
+        -0.245
+      ],
+      "size": [
+        0.48,
+        0.56,
+        0.07
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        -0.52,
+        0,
+        -0.76
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "FilingCabinet",
+      "parent": "Filing_Cabinet",
+      "type": "box",
+      "center": [
+        0,
+        0.31,
+        0
+      ],
+      "size": [
+        0.35,
+        0.62,
+        0.66
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0.23,
+        0,
+        -1.37
+      ],
+      "parent_yaw_radians": -1.5707963267948966
+    },
+    {
+      "name": "TableTop",
+      "parent": "Meeting_Table",
+      "type": "cylinder",
+      "center": [
+        0,
+        0.738,
+        0
+      ],
+      "size": [
+        1.07,
+        0.05,
+        1.07
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        1.07,
+        0,
+        -0.57
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "TablePedestal",
+      "parent": "Meeting_Table",
+      "type": "box",
+      "center": [
+        0,
+        0.37,
+        0
+      ],
+      "size": [
+        0.1,
+        0.72,
+        0.1
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        1.07,
+        0,
+        -0.57
+      ],
+      "parent_yaw_radians": 0
+    },
+    {
+      "name": "Guest_Chair_Desk_Seat",
+      "parent": "Guest_Chair_Desk",
+      "type": "box",
+      "center": [
+        0,
+        0.43,
+        0
+      ],
+      "size": [
+        0.47,
+        0.1,
+        0.43
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        -0.94,
+        0,
+        0.6
+      ],
+      "parent_yaw_radians": 3.141592653589793
+    },
+    {
+      "name": "Guest_Chair_Desk_Back",
+      "parent": "Guest_Chair_Desk",
+      "type": "box",
+      "center": [
+        0,
+        0.72,
+        -0.217
+      ],
+      "size": [
+        0.46,
+        0.3,
+        0.095
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        -0.94,
+        0,
+        0.6
+      ],
+      "parent_yaw_radians": 3.141592653589793
+    },
+    {
+      "name": "Guest_Chair_Desk_Base",
+      "parent": "Guest_Chair_Desk",
+      "type": "box",
+      "center": [
+        0,
+        0.215,
+        0
+      ],
+      "size": [
+        0.51,
+        0.43,
+        0.5
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        -0.94,
+        0,
+        0.6
+      ],
+      "parent_yaw_radians": 3.141592653589793
+    },
+    {
+      "name": "Guest_Chair_Meeting_Left_Seat",
+      "parent": "Guest_Chair_Meeting_Left",
+      "type": "box",
+      "center": [
+        0,
+        0.43,
+        0
+      ],
+      "size": [
+        0.47,
+        0.1,
+        0.43
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0.43,
+        0,
+        -0.8
+      ],
+      "parent_yaw_radians": 1.23
+    },
+    {
+      "name": "Guest_Chair_Meeting_Left_Back",
+      "parent": "Guest_Chair_Meeting_Left",
+      "type": "box",
+      "center": [
+        0,
+        0.72,
+        -0.217
+      ],
+      "size": [
+        0.46,
+        0.3,
+        0.095
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0.43,
+        0,
+        -0.8
+      ],
+      "parent_yaw_radians": 1.23
+    },
+    {
+      "name": "Guest_Chair_Meeting_Left_Base",
+      "parent": "Guest_Chair_Meeting_Left",
+      "type": "box",
+      "center": [
+        0,
+        0.215,
+        0
+      ],
+      "size": [
+        0.51,
+        0.43,
+        0.5
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0.43,
+        0,
+        -0.8
+      ],
+      "parent_yaw_radians": 1.23
+    },
+    {
+      "name": "Guest_Chair_Meeting_Rear_Seat",
+      "parent": "Guest_Chair_Meeting_Rear",
+      "type": "box",
+      "center": [
+        0,
+        0.43,
+        0
+      ],
+      "size": [
+        0.47,
+        0.1,
+        0.43
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        1.36,
+        0,
+        -1.26
+      ],
+      "parent_yaw_radians": -0.4
+    },
+    {
+      "name": "Guest_Chair_Meeting_Rear_Back",
+      "parent": "Guest_Chair_Meeting_Rear",
+      "type": "box",
+      "center": [
+        0,
+        0.72,
+        -0.217
+      ],
+      "size": [
+        0.46,
+        0.3,
+        0.095
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        1.36,
+        0,
+        -1.26
+      ],
+      "parent_yaw_radians": -0.4
+    },
+    {
+      "name": "Guest_Chair_Meeting_Rear_Base",
+      "parent": "Guest_Chair_Meeting_Rear",
+      "type": "box",
+      "center": [
+        0,
+        0.215,
+        0
+      ],
+      "size": [
+        0.51,
+        0.43,
+        0.5
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        1.36,
+        0,
+        -1.26
+      ],
+      "parent_yaw_radians": -0.4
+    },
+    {
+      "name": "Guest_Chair_Meeting_Front_Seat",
+      "parent": "Guest_Chair_Meeting_Front",
+      "type": "box",
+      "center": [
+        0,
+        0.43,
+        0
+      ],
+      "size": [
+        0.47,
+        0.1,
+        0.43
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        1.16,
+        0,
+        0.205
+      ],
+      "parent_yaw_radians": -3.026
+    },
+    {
+      "name": "Guest_Chair_Meeting_Front_Back",
+      "parent": "Guest_Chair_Meeting_Front",
+      "type": "box",
+      "center": [
+        0,
+        0.72,
+        -0.217
+      ],
+      "size": [
+        0.46,
+        0.3,
+        0.095
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        1.16,
+        0,
+        0.205
+      ],
+      "parent_yaw_radians": -3.026
+    },
+    {
+      "name": "Guest_Chair_Meeting_Front_Base",
+      "parent": "Guest_Chair_Meeting_Front",
+      "type": "box",
+      "center": [
+        0,
+        0.215,
+        0
+      ],
+      "size": [
+        0.51,
+        0.43,
+        0.5
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        1.16,
+        0,
+        0.205
+      ],
+      "parent_yaw_radians": -3.026
+    },
+    {
+      "name": "Bookcase",
+      "parent": "Bookcase",
+      "type": "box",
+      "center": [
+        0,
+        0.675,
+        0
+      ],
+      "size": [
+        0.92,
+        1.35,
+        0.32
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        -1.39,
+        0,
+        1.61
+      ],
+      "parent_yaw_radians": 3.141592653589793
+    },
+    {
+      "name": "WasteBin",
+      "parent": "Waste_Bin",
+      "type": "box",
+      "center": [
+        0,
+        0.235,
+        0
+      ],
+      "size": [
+        0.29,
+        0.47,
+        0.37
+      ],
+      "yaw_radians": 0,
+      "parent_position": [
+        0.22,
+        0,
+        0.04
+      ],
+      "parent_yaw_radians": 0
+    }
+  ]
+}

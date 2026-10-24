@@ -1,0 +1,12 @@
+{
+  "desk_treadmill_end_difference_m": 3.6001205405700176e-08,
+  "treadmill_office_chair_gap_m": 0.10250000238418577,
+  "desk_sidewall_gap_m": 0.042299973773956445,
+  "cabinet_meeting_chair_z_gap_m": 0.04996085749128798,
+  "visitor_chair_centered": true,
+  "visitor_chair_faces_desk": true,
+  "black_cord_lowest_y_m": 0.7270005941390991,
+  "white_lead_and_plug_lowest_y_m": 0.7164999842643738,
+  "ceiling_bulb_recess_m": 0.027000014114380022,
+  "all_checks_passed": true
+}

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Office · 3D model preview</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#e9e9e5;color:#242a2c;font:14px -apple-system,BlinkMacSystemFont,Segoe UI,sans-serif}header{padding:18px 24px;display:flex;gap:20px;align-items:center;justify-content:space-between;background:#f8f8f5;border-bottom:1px solid #d4d8d6}h1{font-size:18px;font-weight:600;margin:0}header small{display:block;margin-top:5px;color:#596264;font-size:12px}.controls{display:flex;gap:7px;align-items:center;flex-wrap:wrap}button{font:inherit;background:#fff;border:1px solid #b8c1bd;padding:9px 13px;border-radius:7px;cursor:pointer}button:hover{background:#e6eeeb}button[aria-pressed=true]{color:#fff;background:#214c43;border-color:#214c43}#view{height:calc(100vh - 135px);min-height:430px;width:100%;position:relative}canvas{display:block;width:100%;height:100%;touch-action:none}#status{position:absolute;left:22px;bottom:20px;background:#ffffffdf;padding:10px 14px;border-radius:8px;color:#34413d;font-size:12px;pointer-events:none}footer{padding:13px 24px;display:flex;justify-content:space-between;gap:18px;font-size:12px;color:#51605b}#error{display:none;color:#9a2020;padding:20px}@media(max-width:760px){header{display:block;padding:14px}.controls{margin-top:14px}button{padding:8px 10px}#view{height:65vh}footer{display:block;line-height:1.6}}
+</style>
+<script type="importmap">{"imports":{"three":"__THREE_URL__","buffer-utils":"__UTIL_URL__","gltf-loader":"__LOADER_URL__","orbit-controls":"__ORBIT_URL__"}}</script>
+</head><body>
+<header><div><h1>Small office</h1><small>Photo-guided reconstruction · maximum interior width 12′5″</small></div><div class="controls" aria-label="Model views">
+<button data-view="overview" aria-pressed="true">Overview</button><button data-view="interior" aria-pressed="false">Inside</button><button data-view="desk" aria-pressed="false">Desk</button><button data-view="entry" aria-pressed="false">Entry</button><button id="door" aria-pressed="false">Open door</button><button id="save">Save preview PNG</button></div></header>
+<div id="error" role="alert"></div><div id="view"><div id="status" role="status">Loading model…</div></div>
+<footer><span>Drag to orbit · scroll to zoom · right-drag to pan</span><span>Metres · depth ≈ 3.66 m · height ≈ 2.74 m · 17,238 triangles</span></footer>
+<script type="module">
+import * as THREE from 'three';
+import {GLTFLoader} from 'gltf-loader';
+import {OrbitControls} from 'orbit-controls';
+const host=document.getElementById('view'), status=document.getElementById('status');
+let currentView='overview',doorOpen=false,model;
+try {
+const scene=new THREE.Scene();scene.background=new THREE.Color('#e4e8e6');
+const camera=new THREE.PerspectiveCamera(47,1,.025,60);
+const renderer=new THREE.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.outputColorSpace=THREE.SRGBColorSpace;renderer.toneMapping=THREE.ACESFilmicToneMapping;renderer.toneMappingExposure=1.03;
+host.prepend(renderer.domElement);
+const controls=new OrbitControls(camera,renderer.domElement);controls.enableDamping=true;controls.minDistance=.1;controls.maxDistance=14;controls.maxPolarAngle=Math.PI*.94;
+const hemi=new THREE.HemisphereLight(0xf2f7ff,0xb7ae98,1.1);scene.add(hemi);
+const amb=new THREE.AmbientLight(0xfffaf0,.38);scene.add(amb);
+const lights=[];
+for(const p of [[-.91,2.5,-.91],[.91,2.5,.91]]){const l=new THREE.PointLight(0xfff5e3,6.5,7,2);l.position.set(...p);l.castShadow=true;l.shadow.mapSize.set(1024,1024);l.shadow.bias=-.0001;l.shadow.normalBias=.012;l.shadow.radius=3;l.shadow.camera.near=.04;scene.add(l);lights.push(l);}
+const sun=new THREE.DirectionalLight(0xecf4ff,2);sun.position.set(-3,7,5);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);sun.shadow.camera.left=-4;sun.shadow.camera.right=4;sun.shadow.camera.top=4;sun.shadow.camera.bottom=-4;sun.shadow.camera.near=.1;sun.shadow.camera.far=18;sun.shadow.normalBias=.012;scene.add(sun);
+const raw=Uint8Array.from(atob('__MODEL_B64__'),c=>c.charCodeAt(0));
+new GLTFLoader().parse(raw.buffer,'',gltf=>{
+ model=gltf.scene;scene.add(model);
+ model.traverse(o=>{if(o.isMesh){o.castShadow=true;o.receiveShadow=true;const mats=Array.isArray(o.material)?o.material:[o.material];for(const m of mats){if(m.map)m.map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());if(m.name==='Glass')o.castShadow=false;}}});
+ view('overview');status.textContent='Cutaway view · entry wall and ceiling hidden';
+},e=>{throw e});
+function view(name){currentView=name;for(const b of document.querySelectorAll('[data-view]'))b.setAttribute('aria-pressed',b.dataset.view===name);
+ const cut=name==='overview';for(const n of ['Ceiling_Grid','Wall_Entry','Wall_Right','Door_Hinge']){const obj=model.getObjectByName(n);if(obj)obj.visible=!cut;}
+ const p={overview:[[5,5.4,6.2],[0,.77,0],44],interior:[[.23,1.66,1.57],[-.12,1.02,-.76],81],desk:[[.52,1.84,1.30],[-.90,.68,-.43],64],entry:[[-.14,1.60,-1.34],[.12,1.22,1.68],81]}[name];camera.position.set(...p[0]);controls.target.set(...p[1]);camera.fov=p[2];camera.updateProjectionMatrix();controls.update();sun.intensity=cut?2:.9;hemi.intensity=cut?1.1:.78;amb.intensity=cut?.38:.55;
+ status.textContent=cut?'Cutaway view · entry wall and ceiling hidden':'Full room · drag to look around';
+}
+for(const b of document.querySelectorAll('[data-view]'))b.onclick=()=>view(b.dataset.view);
+document.getElementById('door').onclick=()=>{doorOpen=!doorOpen;const d=model.getObjectByName('Door_Hinge');d.rotation.y=doorOpen?-95*Math.PI/180:0;document.getElementById('door').setAttribute('aria-pressed',doorOpen);document.getElementById('door').textContent=doorOpen?'Close door':'Open door';};
+document.getElementById('save').onclick=async()=>{const size=new THREE.Vector2();renderer.getSize(size);const ratio=renderer.getPixelRatio();renderer.setPixelRatio(1);renderer.setSize(1800,1200,false);camera.aspect=1.5;camera.updateProjectionMatrix();renderer.render(scene,camera);const png=renderer.domElement.toDataURL('image/png');renderer.setPixelRatio(ratio);resize();const filename='preview_'+currentView+'.png';if(location.hostname==='127.0.0.1'){const res=await fetch('/save-preview',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({filename,png})});status.textContent=res.ok?'Saved '+filename:'Could not save preview';}else{const a=document.createElement('a');a.href=png;a.download=filename;a.click();}};
+function resize(){renderer.setSize(host.clientWidth,host.clientHeight);camera.aspect=host.clientWidth/host.clientHeight;camera.updateProjectionMatrix();}new ResizeObserver(resize).observe(host);resize();
+renderer.setAnimationLoop(()=>{controls.update();renderer.render(scene,camera);});
+} catch(e){document.getElementById('error').style.display='block';document.getElementById('error').textContent='Preview unavailable: '+e.message;status.textContent='WebGL is required to view this model.';console.error(e);}
+</script></body></html>

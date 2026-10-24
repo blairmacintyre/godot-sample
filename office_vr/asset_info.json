@@ -1,0 +1,48 @@
+{
+  "dimensions_m": {
+    "width_measured": 3.7846,
+    "depth_estimated": 3.6576,
+    "height_estimated": 2.7432
+  },
+  "statistics": {
+    "triangles": 17642,
+    "vertices": 22322,
+    "mesh_primitives": 76,
+    "meshes": 22,
+    "materials": 22,
+    "embedded_textures": 4,
+    "glb_bytes": 2148984
+  },
+  "collider_count": 34,
+  "recommended_spawn_m": [
+    0.15,
+    0,
+    0.85
+  ],
+  "door_node": "Door_Hinge",
+  "door_open_y_degrees": -95,
+  "assumptions": [
+    "12 ft 5 in interpreted as the maximum interior X width.",
+    "Depth and ceiling height estimated at 12 ft and 9 ft.",
+    "Rear-wall step, furniture dimensions, and positions estimated from photographs.",
+    "No hidden corridor or exterior geometry reconstructed."
+  ],
+  "texture_sizes": {
+    "carpet": [
+      1024,
+      1024
+    ],
+    "birch": [
+      512,
+      1024
+    ],
+    "ceiling": [
+      512,
+      512
+    ],
+    "chair_mesh": [
+      128,
+      128
+    ]
+  }
+}
